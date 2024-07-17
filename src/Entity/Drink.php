@@ -9,42 +9,61 @@ use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
-use App\Repository\DrinksRepository;
+use App\Repository\DrinkRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ApiResource(
     normalizationContext: ['groups' => ['read']],
-    denormalizationContext: ['groups' => ['write']]
+    denormalizationContext: ['groups' => ['write']],
+    forceEager: false
 )]
-#[GetCollection()]
-#[Post()]
-#[Get()]
-#[Put()]
-#[Patch()]
-#[Delete()]
-#[ORM\Entity(repositoryClass: DrinksRepository::class)]
+#[GetCollection(
+    security: "is_granted('ROLE_PATRON') || is_granted('ROLE_SERVEUR') || is_granted('ROLE_BARMAN')"
+)]
+#[Post(
+    security: "is_granted('ROLE_PATRON') || is_granted('ROLE_BARMAN')"
+)]
+#[Get(
+    security: "is_granted('ROLE_PATRON') || is_granted('ROLE_SERVEUR') || is_granted('ROLE_BARMAN')"
+)]
+#[Put(
+    security: "is_granted('ROLE_PATRON') || is_granted('ROLE_BARMAN')"
+)]
+#[Patch(
+    security: "is_granted('ROLE_PATRON') || is_granted('ROLE_BARMAN')"
+)]
+#[Delete(
+    security: "is_granted('ROLE_PATRON') || is_granted('ROLE_BARMAN')"
+)]
+#[ORM\Entity(repositoryClass: DrinkRepository::class)]
 class Drink
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups('read')]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['read', 'write'])]
     private ?string $name = null;
 
     #[ORM\Column]
+    #[Groups(['read', 'write'])]
     private ?int $price = null;
 
     #[ORM\OneToOne(cascade: ['persist', 'remove'])]
+    #[Groups(['read', 'write'])]
     private ?Media $media = null;
 
     /**
      * @var Collection<int, Order>
      */
-    #[ORM\ManyToMany(targetEntity: Order::class, mappedBy: 'drinks')]
+    #[ORM\ManyToMany(targetEntity: Order::class, mappedBy: 'drink')]
+    #[Groups(['read', 'write'])]
     private Collection $orders;
 
     public function __construct()
@@ -103,7 +122,7 @@ class Drink
 
     public function addOrder(Order $order): static
     {
-        if (!$this->orders->contains($order)) {
+        if ($order->getStatus() !== "payée") {
             $this->orders->add($order);
             $order->addDrink($this);
         }

@@ -28,24 +28,25 @@ use Symfony\Component\Serializer\Attribute\Groups;
     securityMessage: 'You are not allowed to get users'
 )]
 #[Post(
+    // security: "is_granted('ROLE_PATRON')",
     processor: UserPasswordHasherProcessor::class
 )]
 #[Get(
-    security: "is_granted('ROLE_PATRON') or object == user",
+    security: "is_granted('ROLE_PATRON')",
     securityMessage: 'You are not allowed to get this user'
 )]
 #[Put(
     processor: UserPasswordHasherProcessor::class,
-    security: "is_granted('ROLE_PATRON') or object == user",
+    security: "is_granted('ROLE_PATRON')",
     securityMessage: 'You are not allowed to edit this user'
 )]
 #[Patch(
     processor: UserPasswordHasherProcessor::class,
-    security: "is_granted('ROLE_PATRON') or object == user",
+    security: "is_granted('ROLE_PATRON')",
     securityMessage: 'You are not allowed to edit this user'
 )]
 #[Delete(
-    security: "is_granted('ROLE_PATRON') or object == user",
+    security: "is_granted('ROLE_PATRON')",
     securityMessage: 'You are not allowed to delete this user'
 )]
 #[UniqueEntity('email')]

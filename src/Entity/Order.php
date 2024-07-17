@@ -15,18 +15,32 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[AllowDynamicProperties]
 #[ApiResource(
     normalizationContext: ['groups' => ['read']],
-    denormalizationContext: ['groups' => ['write']]
+    denormalizationContext: ['groups' => ['write']],
+    forceEager: false
 )]
-#[GetCollection()]
-#[Post()]
-#[Get()]
-#[Put()]
-#[Patch()]
-#[Delete()]
+#[GetCollection(
+    security: "is_granted('ROLE_PATRON') || is_granted('ROLE_SERVEUR') || is_granted('ROLE_BARMAN')"
+)]
+#[Post(
+    security: "is_granted('ROLE_PATRON') || is_granted('ROLE_SERVEUR')"
+)]
+#[Get(
+    security: "is_granted('ROLE_PATRON') || is_granted('ROLE_SERVEUR') || is_granted('ROLE_BARMAN')"
+)]
+#[Put(
+    security: "is_granted('ROLE_PATRON') || is_granted('ROLE_SERVEUR') || is_granted('ROLE_BARMAN')"
+)]
+#[Patch(
+    security: "is_granted('ROLE_PATRON') || is_granted('ROLE_SERVEUR') || is_granted('ROLE_BARMAN')"
+)]
+#[Delete(
+    security: "is_granted('ROLE_PATRON')"
+)]
 #[ORM\Entity(repositoryClass: OrderRepository::class)]
 #[ORM\Table(name: '`order`')]
 class Order
@@ -34,33 +48,43 @@ class Order
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups('read')]
     private ?int $id = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $createdAt = null;
 
     #[ORM\Column]
+    #[Groups(['read', 'write'])]
     private ?int $tableNumber = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['read', 'write'])]
     private ?string $status = null;
 
     #[ORM\ManyToOne(inversedBy: 'orders')]
+    #[Groups(['read', 'write'])]
     private ?User $serveur = null;
 
     #[ORM\ManyToOne(inversedBy: 'orders')]
+    #[Groups(['read', 'write'])]
     private ?User $barman = null;
+
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    #[Groups('read')]
+    private ?\DateTimeInterface $paymentDate = null;
 
     /**
      * @var Collection<int, Drink>
      */
     #[ORM\ManyToMany(targetEntity: Drink::class, inversedBy: 'orders')]
-    private Collection $drinks;
+    #[Groups(['read', 'write'])]
+    private Collection $drink;
 
     public function __construct()
     {
-        $this->drink = new ArrayCollection();
         $this->createdAt = new \DateTime();
+        $this->drink = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -75,6 +99,7 @@ class Order
 
     public function setCreatedAt(\DateTimeInterface $createdAt): static
     {
+        if ($this->status === "payée") return $this;
         $this->createdAt = $createdAt;
 
         return $this;
@@ -87,6 +112,7 @@ class Order
 
     public function setTableNumber(int $tableNumber): static
     {
+        if ($this->status === "payée") return $this;
         $this->tableNumber = $tableNumber;
 
         return $this;
@@ -99,8 +125,17 @@ class Order
 
     public function setStatus(string $status): static
     {
-        $this->status = $status;
+        $allowedStatus = ['en cours de préparation', 'prête', 'payée'];
+        if ($this->status === "payée") return $this;
 
+        if (!in_array($status, $allowedStatus)) {
+            throw new \InvalidArgumentException(sprintf('Invalid status "%s". Allowed status are %s.', $status, implode(', ', $allowedStatus)));
+        }
+
+        $this->status = $status;
+        if ($status === "payée") {
+            $this->setPaymentDate();
+        }
         return $this;
     }
 
@@ -123,7 +158,20 @@ class Order
 
     public function setBarman(?User $barman): static
     {
+        if ($this->status === "payée") return $this;
         $this->barman = $barman;
+
+        return $this;
+    }
+
+    public function getPaymentDate(): ?\DateTimeInterface
+    {
+        return $this->paymentDate;
+    }
+
+    public function setPaymentDate(): static
+    {
+        $this->paymentDate = new \DateTime();
 
         return $this;
     }
@@ -138,9 +186,8 @@ class Order
 
     public function addDrink(Drink $drink): static
     {
-        if (!$this->drink->contains($drink)) {
-            $this->drink->add($drink);
-        }
+        if ($this->status === "payée") return $this;
+        $this->drink->add($drink);
 
         return $this;
     }
