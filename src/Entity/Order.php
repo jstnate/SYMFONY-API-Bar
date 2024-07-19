@@ -16,6 +16,8 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
+use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Doctrine\Orm\Filter\DateFilter;
 
 #[AllowDynamicProperties]
 #[ApiResource(
@@ -27,20 +29,21 @@ use Symfony\Component\Serializer\Attribute\Groups;
     security: "is_granted('ROLE_PATRON') || is_granted('ROLE_SERVEUR') || is_granted('ROLE_BARMAN')"
 )]
 #[Post(
-    security: "is_granted('ROLE_PATRON') || is_granted('ROLE_SERVEUR')"
+    security: "is_granted('ROLE_SERVEUR')"
 )]
 #[Get(
     security: "is_granted('ROLE_PATRON') || is_granted('ROLE_SERVEUR') || is_granted('ROLE_BARMAN')"
 )]
 #[Put(
-    security: "is_granted('ROLE_PATRON') || is_granted('ROLE_SERVEUR') || is_granted('ROLE_BARMAN')"
+    security: "is_granted('ROLE_SERVEUR') || is_granted('ROLE_BARMAN')"
 )]
 #[Patch(
-    security: "is_granted('ROLE_PATRON') || is_granted('ROLE_SERVEUR') || is_granted('ROLE_BARMAN')"
+    security: "is_granted('ROLE_SERVEUR') || is_granted('ROLE_BARMAN')"
 )]
 #[Delete(
-    security: "is_granted('ROLE_PATRON')"
+    security: "is_granted('ROLE_SERVEUR')"
 )]
+#[ApiFilter(DateFilter::class, properties: ['createdAt'])]
 #[ORM\Entity(repositoryClass: OrderRepository::class)]
 #[ORM\Table(name: '`order`')]
 class Order

@@ -21,22 +21,22 @@ use Symfony\Component\Serializer\Attribute\Groups;
     forceEager: false
 )]
 #[GetCollection(
-    security: "is_granted('ROLE_PATRON') || is_granted('ROLE_SERVEUR') || is_granted('ROLE_BARMAN')"
+    security: "is_granted('ROLE_SERVEUR') || is_granted('ROLE_BARMAN')"
 )]
 #[Post(
-    security: "is_granted('ROLE_PATRON') || is_granted('ROLE_BARMAN')"
+    security: "is_granted('ROLE_BARMAN')"
 )]
 #[Get(
-    security: "is_granted('ROLE_PATRON') || is_granted('ROLE_SERVEUR') || is_granted('ROLE_BARMAN')"
+    security: "is_granted('ROLE_SERVEUR') || is_granted('ROLE_BARMAN')"
 )]
 #[Put(
-    security: "is_granted('ROLE_PATRON') || is_granted('ROLE_BARMAN')"
+    security: "is_granted('ROLE_BARMAN')"
 )]
 #[Patch(
-    security: "is_granted('ROLE_PATRON') || is_granted('ROLE_BARMAN')"
+    security: "is_granted('ROLE_BARMAN')"
 )]
 #[Delete(
-    security: "is_granted('ROLE_PATRON') || is_granted('ROLE_BARMAN')"
+    security: "is_granted('ROLE_BARMAN')"
 )]
 #[ORM\Entity(repositoryClass: DrinkRepository::class)]
 class Drink

@@ -28,7 +28,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
     securityMessage: 'You are not allowed to get users'
 )]
 #[Post(
-    // security: "is_granted('ROLE_PATRON')",
+    security: "is_granted('ROLE_PATRON')",
     processor: UserPasswordHasherProcessor::class
 )]
 #[Get(
